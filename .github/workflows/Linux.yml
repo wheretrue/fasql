@@ -49,6 +49,23 @@ jobs:
         apt-get update -y -qq
         apt-get install -y -qq ninja-build make gcc-multilib g++-multilib libssl-dev wget openjdk-8-jdk zip maven unixodbc-dev libc6-dev-i386 lib32readline6-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext unzip build-essential checkinstall libffi-dev curl libz-dev openssh-client libbz2-dev bzip2
 
+    - name: Check S3
+      env:
+        BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+      run: |
+        python3 -m pip install pip awscli
+        aws s3 ls s3://$BUCKET_NAME/
+
+    - name: Install Git 2.18.5
+      if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
+      run: |
+        wget https://github.com/git/git/archive/refs/tags/v2.18.5.tar.gz
+        tar xvf v2.18.5.tar.gz
+        cd git-2.18.5
+        make
+        make prefix=/usr install
+        git --version
+
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
@@ -73,12 +90,6 @@ jobs:
       uses: ./duckdb/.github/actions/ubuntu_16_setup
       with:
         aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 }}
-
-    - name: Check S3
-      env:
-        BUCKET_NAME: ${{ secrets.S3_BUCKET }}
-      run: |
-        aws s3 ls s3://$BUCKET_NAME/
 
       # Build extension
     - name: Build extension
