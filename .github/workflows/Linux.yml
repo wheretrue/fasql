@@ -49,11 +49,16 @@ jobs:
         apt-get update -y -qq
         apt-get install -y -qq ninja-build make gcc-multilib g++-multilib libssl-dev wget openjdk-8-jdk zip maven unixodbc-dev libc6-dev-i386 lib32readline6-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext unzip build-essential checkinstall libffi-dev curl libz-dev openssh-client libbz2-dev bzip2
 
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
     - name: Check S3
       env:
         BUCKET_NAME: ${{ secrets.S3_BUCKET }}
       run: |
-        python3 -m pip install pip awscli
+        python -m pip install pip awscli
         aws s3 ls s3://$BUCKET_NAME/
 
     - name: Install Git 2.18.5
