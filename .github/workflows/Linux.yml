@@ -22,14 +22,14 @@ jobs:
       matrix:
         # Add commits/tags to build against other DuckDB versions
         duckdb_version: [ 'v0.7.1' ]
-        arch: ['linux_amd64']
+        arch: ['linux_amd64', 'linux_amd64_gcc4']
         include:
           - arch: 'linux_amd64'
             container: 'ubuntu:16.04'
           # - arch: 'linux_arm64'
           #   container: 'ubuntu:18.04'
-          # - arch: 'linux_amd64_gcc4'
-          #   container: 'quay.io/pypa/manylinux2014_x86_64'
+          - arch: 'linux_amd64_gcc4'
+            container: 'quay.io/pypa/manylinux2014_x86_64'
     env:
       GEN: ninja
 
