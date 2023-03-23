@@ -2,6 +2,7 @@ name: Windows
 
 on:
   workflow_dispatch:
+  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
@@ -16,8 +17,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # Add commits/tags to build against other DuckDB versions
-        duckdb_version: [ '<submodule_version>' ]
+        duckdb_version: [ 'v0.7.1' ]
 
     steps:
       - uses: actions/checkout@v3
@@ -25,13 +25,19 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fasql-deploy-role
+
       - uses: actions/setup-python@v2
         with:
           python-version: '3.7'
 
       - name: Checkout DuckDB to version
         # Add commits/tags to build against other DuckDB versions
-        if: ${{ matrix.duckdb_version != '<submodule_version>'}}
+        if: ${{ matrix.duckdb_version != 'v0.7.1' }}
         run: |
           cd duckdb
           git checkout ${{ matrix.duckdb_version }}
@@ -49,9 +55,6 @@ jobs:
 
       - name: Deploy
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.S3_DEPLOY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_DEPLOY_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
           BUCKET_NAME: ${{ secrets.S3_BUCKET }}
         run: |
           cd duckdb
