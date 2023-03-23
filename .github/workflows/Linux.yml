@@ -73,13 +73,6 @@ jobs:
     - name: Install Conda environment from environment.yml
       uses: mamba-org/provision-with-micromamba@main
 
-    - name: Check S3
-      shell: bash -l {0}
-      env:
-        BUCKET_NAME: ${{ secrets.S3_BUCKET }}}
-      run: |
-        aws s3 ls s3://$BUCKET_NAME/
-
     - if: ${{ matrix.arch == 'linux_amd64_gcc4' }}
       uses: ./duckdb/.github/actions/centos_7_setup
       with:
