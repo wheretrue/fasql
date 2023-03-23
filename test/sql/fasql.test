@@ -1,0 +1,35 @@
+require fasql
+
+query III
+SELECT * FROM read_fasta('test/sql/test.fasta');
+----
+ID
+Description
+ATCG
+ID2
+Description2
+CCCC
+
+query IIII
+SELECT * FROM read_fastq('test/sql/test.fastq');
+----
+SEQ_ID
+NULL
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+SEQ_ID2
+NULL
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+
+query IIII
+SELECT * FROM read_fastq('test/sql/test.fastq.gz');
+----
+SEQ_ID
+NULL
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+SEQ_ID2
+NULL
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
