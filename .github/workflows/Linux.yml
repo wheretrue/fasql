@@ -76,7 +76,7 @@ jobs:
     - name: Check S3
       shell: bash -l {0}
       env:
-        BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+        BUCKET_NAME: ${{ secrets.S3_BUCKET }}}
       run: |
         aws s3 ls s3://$BUCKET_NAME/
 
@@ -117,8 +117,9 @@ jobs:
 
     - name: Deploy
       env:
-        AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
         BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+      shell:
+        bash -l {0}
       run: |
         git config --global --add safe.directory '*'
         cd duckdb
@@ -129,9 +130,7 @@ jobs:
         if [[ "$BUCKET_NAME" == "" ]] ; then
           echo 'No key set, skipping'
         elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
-          python3 -m pip install pip awscli
           ./scripts/extension-upload.sh fasql ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME true
         elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
-          python3 -m pip install pip awscli
           ./scripts/extension-upload.sh fasql `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME false
         fi
