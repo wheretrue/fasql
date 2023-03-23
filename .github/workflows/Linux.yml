@@ -1,4 +1,5 @@
 name: Linux
+
 on: [push, pull_request]
 
 concurrency:
@@ -7,6 +8,10 @@ concurrency:
 defaults:
   run:
     shell: bash
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   linux:
@@ -17,18 +22,24 @@ jobs:
       matrix:
         # Add commits/tags to build against other DuckDB versions
         duckdb_version: [ 'v0.7.1' ]
-        arch: ['linux_amd64', 'linux_amd64_gcc4']
+        arch: ['linux_amd64']
         include:
           - arch: 'linux_amd64'
             container: 'ubuntu:16.04'
           # - arch: 'linux_arm64'
           #   container: 'ubuntu:18.04'
-          - arch: 'linux_amd64_gcc4'
-            container: 'quay.io/pypa/manylinux2014_x86_64'
+          # - arch: 'linux_amd64_gcc4'
+          #   container: 'quay.io/pypa/manylinux2014_x86_64'
     env:
       GEN: ninja
 
     steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-west-2
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fasql-deploy-role
+
     - name: Install required ubuntu packages
       if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
       run: |
@@ -63,6 +74,12 @@ jobs:
       with:
         aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 }}
 
+    - name: Check S3
+      env:
+        BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+      run: |
+        aws s3 ls s3://$BUCKET_NAME/
+
       # Build extension
     - name: Build extension
       env:
@@ -86,8 +103,6 @@ jobs:
 
     - name: Deploy
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.S3_DEPLOY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_DEPLOY_KEY }}
         AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
         BUCKET_NAME: ${{ secrets.S3_BUCKET }}
       run: |
@@ -97,7 +112,7 @@ jobs:
         export DUCKDB_VERSION=`git tag --points-at HEAD`
         export DUCKDB_VERSION=${DUCKDB_VERSION:=`git log -1 --format=%h`}
         cd ..
-        if [[ "$AWS_ACCESS_KEY_ID" == "" ]] ; then
+        if [[ "$BUCKET_NAME" == "" ]] ; then
           echo 'No key set, skipping'
         elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
           python3 -m pip install pip awscli
