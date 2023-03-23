@@ -78,7 +78,6 @@ jobs:
       env:
         BUCKET_NAME: ${{ secrets.S3_BUCKET }}
       run: |
-        python -m pip3 install pip awscli
         aws s3 ls s3://$BUCKET_NAME/
 
     - if: ${{ matrix.arch == 'linux_amd64_gcc4' }}
