@@ -11,6 +11,10 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   macos:
     name: MacOS Release (Universal)
@@ -18,7 +22,7 @@ jobs:
     strategy:
       matrix:
         # Add commits/tags to build against other DuckDB versions
-        duckdb_version: [ '<submodule_version>' ]
+        duckdb_version: [ 'v0.7.1' ]
 
     env:
       OSX_BUILD_UNIVERSAL: 1
@@ -38,7 +42,7 @@ jobs:
           python-version: '3.7'
 
       - name: Checkout DuckDB to version
-        if: ${{ matrix.duckdb_version != '<submodule_version>'}}
+        if: ${{ matrix.duckdb_version != 'v0.7.1' }}
         run: |
           cd duckdb
           git checkout ${{ matrix.duckdb_version }}

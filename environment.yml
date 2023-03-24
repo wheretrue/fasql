@@ -4,5 +4,6 @@ channels:
   - defaults
 dependencies:
   - pip
+  - zlib
   - pip:
       - awscli

@@ -29,15 +29,14 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/provision-with-micromamba@main
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fasql-deploy-role
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.7'
 
       - name: Checkout DuckDB to version
         # Add commits/tags to build against other DuckDB versions
@@ -47,6 +46,8 @@ jobs:
           git checkout ${{ matrix.duckdb_version }}
 
       - name: Build extension
+        shell:
+          bash -l {0}
         run: |
           make release
           build/release/test/Release/unittest.exe
@@ -60,6 +61,8 @@ jobs:
       - name: Deploy
         env:
           BUCKET_NAME: ${{ secrets.S3_BUCKET }}
+        shell:
+          bash -l {0}
         run: |
           cd duckdb
           git fetch --tags
@@ -69,9 +72,7 @@ jobs:
           if [[ "$AWS_ACCESS_KEY_ID" == "" ]] ; then
             echo 'No key set, skipping'
           elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
-            python -m pip install awscli
             ./scripts/extension-upload.sh fasql ${{ github.ref_name }} $DUCKDB_VERSION windows_amd64 $BUCKET_NAME true
           elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
-            python -m pip install awscli
             ./scripts/extension-upload.sh fasql `git log -1 --format=%h` $DUCKDB_VERSION windows_amd64 $BUCKET_NAME false
           fi
