@@ -37,6 +37,12 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fasql-deploy-role
+
       - name: Install Ninja
         run: brew install ninja zlib
 
