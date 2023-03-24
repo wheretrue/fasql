@@ -1,4 +1,4 @@
-# fasql (0.0.5)
+# fasql (v0.0.5)
 
 > Read FASTX Files w/ DuckDB
 
@@ -29,7 +29,7 @@ LIMIT 5
 
 ## Installation
 
-To install and use `fasql` you, start a `duckdb` session:
+To install and use `fasql`, start a `duckdb` session:
 
 ```
 # unsigned required for non duckdb distributed extensions
