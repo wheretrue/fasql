@@ -63,7 +63,7 @@ jobs:
           make release
           make test
 
-      - name: Deploy
+      - name: Deploy New Release
         env:
           BUCKET_NAME: ${{ secrets.S3_BUCKET }}
         run: |

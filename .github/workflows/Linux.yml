@@ -2,8 +2,6 @@ name: Linux
 
 on:
   push:
-    branches:
-      - main
     tags:
       - v*
   workflow_dispatch:
@@ -69,7 +67,6 @@ jobs:
         submodules: 'true'
 
     - name: Checkout DuckDB to version
-      if: ${{ matrix.duckdb_version != 'v0.7.1' }}
       run: |
         cd duckdb
         git checkout ${{ matrix.duckdb_version }}
@@ -118,16 +115,4 @@ jobs:
       shell:
         bash -l {0}
       run: |
-        git config --global --add safe.directory '*'
-        cd duckdb
-        git fetch --tags
-        export DUCKDB_VERSION=`git tag --points-at HEAD`
-        export DUCKDB_VERSION=${DUCKDB_VERSION:=`git log -1 --format=%h`}
-        cd ..
-        if [[ "$BUCKET_NAME" == "" ]] ; then
-          echo 'No key set, skipping'
-        elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
-          ./scripts/extension-upload.sh fasql ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME true
-        elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
-          ./scripts/extension-upload.sh fasql `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME false
-        fi
+        ./scripts/extension-upload.sh fasql ${{ github.ref_name }} ${{ matrix.duckdb_version }} ${{ matrix.arch }} $BUCKET_NAME true
