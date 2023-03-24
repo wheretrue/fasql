@@ -2,9 +2,12 @@
 
 > Read FASTX Files w/ DuckDB
 
+- [Overview](#overview)
+- [Installation](#installation)
+
 ## Overview
 
-`fasql` is an open source DuckDB Extension from WHERE TRUE Technologies that adds FASTA and FASTQ file parsing as table functions.
+`fasql` is an open source DuckDB Extension from [WHERE TRUE Technologies](https://www.wheretrue.com) that adds FASTA and FASTQ file parsing as table functions.
 
 For example, given a FASTA file called `./swissprot.fasta.gz` in your local directory, you can query it like so.
 
@@ -29,7 +32,7 @@ LIMIT 5
 To install and use `fasql` you, start a `duckdb` session:
 
 ```
-# -unsigned required for non duckdb distributed extensions
+# unsigned required for non duckdb distributed extensions
 $ duckdb -unsigned
 ```
 
