@@ -39,9 +39,9 @@ $ duckdb -unsigned
 Now from the session:
 
 ```SQL
-D SET custom_extension_repository='fasql.wheretrue.com/fasql/latest'
-D INSTALL fasql
-D LOAD fasql
+D SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';
+D INSTALL fasql;
+D LOAD fasql;
 ```
 
 If you want some easy data to play with you can `wget` one of the test files.
@@ -53,8 +53,8 @@ $ wget https://raw.githubusercontent.com/wheretrue/fasql/main/test/sql/test.fast
 Then back into the console, load the extension and enjoy.
 
 ```SQL
-D LOAD fasql
-D SELECT COUNT(*) FROM read_fasta('./test.fasta')
+D LOAD fasql;
+D SELECT COUNT(*) FROM read_fasta('./test.fasta');
 -- ┌──────────────┐
 -- │ count_star() │
 -- │    int64     │
