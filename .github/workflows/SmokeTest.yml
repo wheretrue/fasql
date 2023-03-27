@@ -1,0 +1,38 @@
+name: CLI Smoke Test
+
+on:
+    workflow_dispatch:
+    push:
+
+jobs:
+    test:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+        steps:
+            - uses: actions/checkout@v2
+            - name: Install Duckdb on Mac
+              if: matrix.os == 'macos-latest'
+              run: |
+                  brew install duckdb
+            - name: Install DuckDB on Linux
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  sudo apt-get install wget unzip
+                  wget -O duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.7.1/duckdb_cli-linux-amd64.zip
+                  unzip duckdb.zip -d duckdb
+                  sudo mv duckdb/duckdb /usr/local/bin
+            - name: Install DuckDB on Windows
+              if: matrix.os == 'windows-latest'
+              shell: bash
+              run: |
+                  choco install wget unzip
+                  wget -O duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.7.1/duckdb_cli-windows-amd64.zip
+                  unzip duckdb.zip -d duckdb
+                  mv duckdb/duckdb.exe /c/duckdb.exe
+            - name: Run Test
+              shell: bash
+              run: |
+                    echo "SELECT 1;" | duckdb
+                    duckdb -unsigned < ./test/smoke-test.sql
