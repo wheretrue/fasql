@@ -29,6 +29,22 @@ LIMIT 5
 -- └──────────────────────┴──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+A number of "replacement scans" also work, whereby you just need to have a file reasonably named, and the extension will pick up on it as the appropriate file. E.g. `SELECT * FROM 'test.fasta'` or `SELECT * FROM 'test.fastq.gz'`.
+
+The following file endings will trigger the scan for FASTA:
+
+* `.fasta.gz`
+* `.fa.gz`
+* `.fasta`
+* `.fa`
+
+And for FASTQ:
+
+* `.fastq.gz`
+* `.fq.gz`
+* `.fastq`
+* `.fq`
+
 ## Installation and Usage
 
 You can use this extension as you would other DuckDB extensions. Here's one example of how to do that in a raw DuckDB console and one in Python.
@@ -79,7 +95,6 @@ import pathlib
 import duckdb
 
 con = duckdb.connect(config={'allow_unsigned_extensions': True})
-
 con.execute("SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';")
 con.execute("INSTALL fasql;")
 con.execute("LOAD fasql;")
@@ -93,7 +108,7 @@ assert len(result) == 569213
 
 # Or create a dataframe.
 df = con.execute(f"SELECT * FROM read_fasta('{path}');").df()
->>> df.head()
+# print(df.head())
 #                           id                                        description                                           sequence
 # 0   sp|A0A023I7E1|ENG1_RHIMI  Glucan endo-1,3-beta-D-glucosidase 1 OS=Rhizom...  MRFQVIVAAATITMITSYIPGVASQSTSDGDDLFVPVSNFDPKSIF...
 # 1   sp|A0A024B7W1|POLG_ZIKVF  Genome polyprotein OS=Zika virus (isolate ZIKV...  MKNPKKKSGGFRIVNMLKRGVARVSPFGGLKRLPAGLLLGHGPIRM...

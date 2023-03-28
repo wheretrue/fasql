@@ -32,7 +32,7 @@ namespace fasql
                                                                               duckdb::TableFunctionInitInput &input)
     {
         auto result = duckdb::make_unique<FastqScanGlobalState>();
-        return move(result);
+        return std::move(result);
     }
 
     duckdb::unique_ptr<duckdb::LocalTableFunctionState> FastqInitLocalState(duckdb::ExecutionContext &context, duckdb::TableFunctionInitInput &input,
@@ -43,7 +43,7 @@ namespace fasql
 
         auto local_state = duckdb::make_unique<FastqScanLocalState>();
 
-        return move(local_state);
+        return std::move(local_state);
     }
 
     duckdb::unique_ptr<duckdb::FunctionData> FastqBind(duckdb::ClientContext &context, duckdb::TableFunctionBindInput &input,
@@ -72,7 +72,7 @@ namespace fasql
         names.push_back("sequence");
         names.push_back("quality_scores");
 
-        return move(result);
+        return std::move(result);
     }
 
     void FastqScan(duckdb::ClientContext &context, duckdb::TableFunctionInput &data, duckdb::DataChunk &output)
@@ -131,6 +131,33 @@ namespace fasql
 
         duckdb::CreateTableFunctionInfo fastq_table_function_info(fastq_table_function);
         return duckdb::make_unique<duckdb::CreateTableFunctionInfo>(fastq_table_function_info);
+    }
+
+    duckdb::unique_ptr<duckdb::TableRef> FastqIO::GetFastqReplacementScanFunction(duckdb::ClientContext &context, const std::string &table_name, duckdb::ReplacementScanData *data)
+    {
+        auto table_function = duckdb::make_unique<duckdb::TableFunctionRef>();
+
+        auto valid_fasta_filename = duckdb::StringUtil::EndsWith(table_name, ".fq") || duckdb::StringUtil::EndsWith(table_name, ".fastq");
+        valid_fasta_filename = valid_fasta_filename || duckdb::StringUtil::EndsWith(table_name, ".fq.gz") || duckdb::StringUtil::EndsWith(table_name, ".fastq.gz");
+
+        if (!valid_fasta_filename)
+        {
+            return nullptr;
+        };
+
+        auto &fs = duckdb::FileSystem::GetFileSystem(context);
+
+        if (!(fs.FileExists(table_name)))
+        {
+            return nullptr;
+        };
+
+        std::vector<duckdb::unique_ptr<duckdb::ParsedExpression>> children;
+        children.push_back(duckdb::make_unique<duckdb::ConstantExpression>(duckdb::Value(table_name)));
+
+        table_function->function = duckdb::make_unique<duckdb::FunctionExpression>("read_fastq", std::move(children));
+
+        return table_function;
     }
 
 }

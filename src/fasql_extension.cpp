@@ -28,6 +28,14 @@ namespace duckdb
         auto fastq_scan = fasql::FastqIO::GetFastqTableFunction();
         catalog.CreateTableFunction(context, fastq_scan.get());
 
+        auto &config = DBConfig::GetConfig(context);
+
+        auto fasta_replacement_scan = fasql::FastaIO::GetFastaReplacementScanFunction;
+        config.replacement_scans.emplace_back(fasta_replacement_scan);
+
+        auto fastq_replacement_scan = fasql::FastqIO::GetFastqReplacementScanFunction;
+        config.replacement_scans.emplace_back(fastq_replacement_scan);
+
         con.Commit();
     }
 
