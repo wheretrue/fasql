@@ -29,6 +29,22 @@ LIMIT 5
 -- └──────────────────────┴──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+A number of "replacement scans" also work, whereby you just need to have a file reasonably named, and the extension will pick up on it as the appropriate file. E.g. `SELECT * FROM 'test.fasta'` or `SELECT * FROM 'test.fastq.gz'`.
+
+The following file endings will trigger the scan for FASTA:
+
+* `.fasta.gz`
+* `.fa.gz`
+* `.fasta`
+* `.fa`
+
+And for FASTQ:
+
+* `.fastq.gz`
+* `.fq.gz`
+* `.fastq`
+* `.fq`
+
 ## Installation and Usage
 
 You can use this extension as you would other DuckDB extensions. Here's one example of how to do that in a raw DuckDB console and one in Python.
