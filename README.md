@@ -3,7 +3,9 @@
 > Read FASTX Files w/ DuckDB
 
 - [Overview](#overview)
-- [Installation](#installation)
+- [Installation and Usage](#installation-and-usage)
+  - [DuckDB Console](#duckdb-console)
+  - [Python](#python)
 
 ## Overview
 
@@ -27,7 +29,11 @@ LIMIT 5
 -- └──────────────────────┴──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Installation
+## Installation and Usage
+
+You can use this extension as you would other DuckDB extensions. Here's one example of how to do that in a raw DuckDB console and one in Python.
+
+### DuckDB Console
 
 To install and use `fasql`, start a `duckdb` session:
 
@@ -61,4 +67,37 @@ D SELECT COUNT(*) FROM read_fasta('./test.fasta');
 -- ├──────────────┤
 -- │            2 │
 -- └──────────────┘
+```
+
+### Python
+
+For example, this script installs the extension then counts the number of records at `path`.
+
+```python
+import pathlib
+
+import duckdb
+
+con = duckdb.connect(config={'allow_unsigned_extensions': True})
+
+con.execute("SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';")
+con.execute("INSTALL fasql;")
+con.execute("LOAD fasql;")
+
+# Assumes this is in your home directory.
+path = pathlib.Path("swissprot.fasta.gz")
+
+result = con.execute(f"SELECT * FROM read_fasta('{path}');").fetchall()
+print(len(result))
+assert len(result) == 569213
+
+# Or create a dataframe.
+df = con.execute(f"SELECT * FROM read_fasta('{path}');").df()
+>>> df.head()
+#                           id                                        description                                           sequence
+# 0   sp|A0A023I7E1|ENG1_RHIMI  Glucan endo-1,3-beta-D-glucosidase 1 OS=Rhizom...  MRFQVIVAAATITMITSYIPGVASQSTSDGDDLFVPVSNFDPKSIF...
+# 1   sp|A0A024B7W1|POLG_ZIKVF  Genome polyprotein OS=Zika virus (isolate ZIKV...  MKNPKKKSGGFRIVNMLKRGVARVSPFGGLKRLPAGLLLGHGPIRM...
+# 2  sp|A0A024SC78|CUTI1_HYPJR  Cutinase OS=Hypocrea jecorina (strain ATCC 567...  MRSLAILTTLLAGHAFAYPKPAPQSVNRRDWPSINEFLSELAKVMP...
+# 3   sp|A0A024SH76|GUX2_HYPJR  Exoglucanase 2 OS=Hypocrea jecorina (strain AT...  MIVGILTTLATLATLAASVPLEERQACSSVWGQCGGQNWSGPTCCA...
+# 4   sp|A0A026W182|ORCO_OOCBI  Odorant receptor coreceptor OS=Ooceraea biroi ...  MMKMKQQGLVADLLPNIRVMKTFGHFVFNYYNDNSSKYLHKVYCCV...
 ```
