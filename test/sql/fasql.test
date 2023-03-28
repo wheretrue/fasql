@@ -1,5 +1,25 @@
 require fasql
 
+query I
+SELECT COUNT(*) FROM 'test/sql/test.fasta'
+----
+2
+
+query I
+SELECT COUNT(*) FROM 'test/sql/test.fasta.gz'
+----
+2
+
+query I
+SELECT COUNT(*) FROM 'test/sql/test.fastq'
+----
+2
+
+query I
+SELECT COUNT(*) FROM 'test/sql/test.fastq.gz'
+----
+2
+
 query III
 SELECT * FROM read_fasta('test/sql/test.fasta');
 ----
