@@ -1,4 +1,4 @@
-# fasql (v0.1.0)
+# fasql (v0.2.0)
 
 > Read FASTX Files w/ DuckDB
 
