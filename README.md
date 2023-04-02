@@ -3,6 +3,11 @@
 > Read FASTX Files w/ DuckDB
 
 - [Overview](#overview)
+  - [Schemas](#schemas)
+    - [FASTA](#fasta)
+    - [FASTQ](#fastq)
+  - [Replacement Scans](#replacement-scans)
+  - [Globs](#globs)
 - [Installation and Usage](#installation-and-usage)
   - [DuckDB Console](#duckdb-console)
   - [Python](#python)
@@ -17,17 +22,41 @@ For example, given a FASTA file called `./swissprot.fasta.gz` in your local dire
 SELECT *
 FROM read_fasta('./swissprot.fasta.gz')
 LIMIT 5
--- ┌──────────────────────┬──────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
--- │          id          │     description      │                                                                                             sequence                                                                                              │
--- │       varchar        │       varchar        │                                                                                              varchar                                                                                              │
--- ├──────────────────────┼──────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
--- │ sp|A0A023I7E1|ENG1…  │ Glucan endo-1,3-be…  │ MRFQVIVAAATITMITSYIPGVASQSTSDGDDLFVPVSNFDPKSIFPEIKHPFEPMYANTENGKIVPTNSWISNLFYPSADNLAPTTPDPYTLRLLDGYGGNPGLTIRQPSAKVLGSYPPTNDVPYTDAGYMINSVVVDLRLTSSEWSDVVPDRQVTDWDHLSANLRLSTPQDSNSYIDFPIVRGMAYITA…  │
--- │ sp|A0A024B7W1|POLG…  │ Genome polyprotein…  │ MKNPKKKSGGFRIVNMLKRGVARVSPFGGLKRLPAGLLLGHGPIRMVLAILAFLRFTAIKPSLGLINRWGSVGKKEAMEIIKKFKKDLAAMLRIINARKEKKRRGADTSVGIVGLLLTTAMAAEVTRRGSAYYMYLDRNDAGEAISFPTTLGMNKCYIQIMDLGHMCDATMSYECPMLDEGVEPDDVDCWC…  │
--- │ sp|A0A024SC78|CUTI…  │ Cutinase OS=Hypocr…  │ MRSLAILTTLLAGHAFAYPKPAPQSVNRRDWPSINEFLSELAKVMPIGDTITAACDLISDGEDAAASLFGISETENDPCGDVTVLFARGTCDPGNVGVLVGPWFFDSLQTALGSRTLGVKGVPYPASVQDFLSGSVQNGINMANQIKSVLQSCPNTKLVLGGYSQGSMVVHNAASNLDAATMSKISAVVLF…  │
--- │ sp|A0A024SH76|GUX2…  │ Exoglucanase 2 OS=…  │ MIVGILTTLATLATLAASVPLEERQACSSVWGQCGGQNWSGPTCCASGSTCVYSNDYYSQCLPGAASSSSSTRAASTTSRVSPTTSRSSSATPPPGSTTTRVPPVGSGTATYSGNPFVGVTPWANAYYASEVSSLAIPSLTGAMATAAAAVAKVPSFMWLDTLDKTPLMEQTLADIRTANKNGGNYAGQFV…
--- │ sp|A0A026W182|ORCO…  │ Odorant receptor c…  │ MMKMKQQGLVADLLPNIRVMKTFGHFVFNYYNDNSSKYLHKVYCCVNLFMLLLQFGLCAVNLIVESADVDDLTANTITLLFFTHSIVKICYFAIRSKYFYRTWAIWNNPNSHPLFAESNARYHAIALKKMRLLLFLVGGTTMLAAVAWTVLTFFEHPIRKIVDPVTNETEIIELPQLLIRSFYPFDAGKGI…  │
--- └──────────────────────┴──────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+-- ┌──────────────────────┬──────────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────────────────┐
+-- │          id          │     description      │                                                           sequence                                                           │      file_name       │
+-- │       varchar        │       varchar        │                                                           varchar                                                            │       varchar        │
+-- ├──────────────────────┼──────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────┤
+-- │ sp|A0A023I7E1|ENG1…  │ Glucan endo-1,3-be…  │ MRFQVIVAAATITMITSYIPGVASQSTSDGDDLFVPVSNFDPKSIFPEIKHPFEPMYANTENGKIVPTNSWISNLFYPSADNLAPTTPDPYTLRLLDGYGGNPGLTIRQPSAKVLGSYPPTN…  │ ./swissprot.fasta.gz │
+-- │ sp|A0A024B7W1|POLG…  │ Genome polyprotein…  │ MKNPKKKSGGFRIVNMLKRGVARVSPFGGLKRLPAGLLLGHGPIRMVLAILAFLRFTAIKPSLGLINRWGSVGKKEAMEIIKKFKKDLAAMLRIINARKEKKRRGADTSVGIVGLLLTTAMA…  │ ./swissprot.fasta.gz │
+-- │ sp|A0A024SC78|CUTI…  │ Cutinase OS=Hypocr…  │ MRSLAILTTLLAGHAFAYPKPAPQSVNRRDWPSINEFLSELAKVMPIGDTITAACDLISDGEDAAASLFGISETENDPCGDVTVLFARGTCDPGNVGVLVGPWFFDSLQTALGSRTLGVKGV…  │ ./swissprot.fasta.gz │
+-- │ sp|A0A024SH76|GUX2…  │ Exoglucanase 2 OS=…  │ MIVGILTTLATLATLAASVPLEERQACSSVWGQCGGQNWSGPTCCASGSTCVYSNDYYSQCLPGAASSSSSTRAASTTSRVSPTTSRSSSATPPPGSTTTRVPPVGSGTATYSGNPFVGVTP…  │ ./swissprot.fasta.gz │
+-- │ sp|A0A026W182|ORCO…  │ Odorant receptor c…  │ MMKMKQQGLVADLLPNIRVMKTFGHFVFNYYNDNSSKYLHKVYCCVNLFMLLLQFGLCAVNLIVESADVDDLTANTITLLFFTHSIVKICYFAIRSKYFYRTWAIWNNPNSHPLFAESNARY…  │ ./swissprot.fasta.gz │
+-- └──────────────────────┴──────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────────────────┘
 ```
+
+### Schemas
+
+The schemas for the FASTA and FASTQ table functions are as follows.
+
+#### FASTA
+
+| column_name | column_type | null |
+| ----------- | ----------- | ---- |
+| id          | VARCHAR     | YES  |
+| description | VARCHAR     | YES  |
+| sequence    | VARCHAR     | YES  |
+| file_name   | VARCHAR     | YES  |
+
+#### FASTQ
+
+| column_name | column_type | null |
+| ----------- | ----------- | ---- |
+| id          | VARCHAR     | YES  |
+| description | VARCHAR     | YES  |
+| sequence    | VARCHAR     | YES  |
+| file_name   | VARCHAR     | YES  |
+
+### Replacement Scans
 
 A number of "replacement scans" also work, whereby you just need to have a file reasonably named, and the extension will pick up on it as the appropriate file. E.g. `SELECT * FROM 'test.fasta'` or `SELECT * FROM 'test.fastq.gz'`.
 
@@ -44,6 +73,12 @@ And for FASTQ:
 * `.fq.gz`
 * `.fastq`
 * `.fq`
+
+### Globs
+
+Globs are supported both within the table function and the replacement scan (provided the glob matches the replacement scan in the first place.
+
+For example, `SELECT * FROM './path/to/*.fasta'` will select all FASTA files in the `./path/to/` directory. This is the same as `SELECT * FROM read_fasta('./path/to/*.fasta')`.
 
 ## Installation and Usage
 
@@ -107,7 +142,7 @@ print(len(result))
 assert len(result) == 569213
 
 # Or create a dataframe.
-df = con.execute(f"SELECT * FROM read_fasta('{path}');").df()
+df = con.execute(f"SELECT id, description, sequence FROM read_fasta('{path}');").df()
 # print(df.head())
 #                           id                                        description                                           sequence
 # 0   sp|A0A023I7E1|ENG1_RHIMI  Glucan endo-1,3-beta-D-glucosidase 1 OS=Rhizom...  MRFQVIVAAATITMITSYIPGVASQSTSDGDDLFVPVSNFDPKSIF...
