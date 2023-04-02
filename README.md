@@ -49,12 +49,13 @@ The schemas for the FASTA and FASTQ table functions are as follows.
 
 #### FASTQ
 
-| column_name | column_type | null |
-| ----------- | ----------- | ---- |
-| id          | VARCHAR     | YES  |
-| description | VARCHAR     | YES  |
-| sequence    | VARCHAR     | YES  |
-| file_name   | VARCHAR     | YES  |
+| column_name    | column_type | null |
+| -------------- | ----------- | ---- |
+| id             | VARCHAR     | YES  |
+| description    | VARCHAR     | YES  |
+| sequence       | VARCHAR     | YES  |
+| quality_scores | VARCHAR     | YES  |
+| file_name      | VARCHAR     | YES  |
 
 ### Replacement Scans
 
