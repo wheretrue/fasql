@@ -20,36 +20,69 @@ SELECT COUNT(*) FROM 'test/sql/test.fastq.gz'
 ----
 2
 
-query III
+query IIII
 SELECT * FROM read_fasta('test/sql/test.fasta');
 ----
 ID
 Description
 ATCG
+test/sql/test.fasta
 ID2
 Description2
 CCCC
+test/sql/test.fasta
 
-query IIII
+query I
+SELECT COUNT(*) FROM read_fasta('test/sql/test.fasta*');
+----
+4
+
+query I
+SELECT DISTINCT file_name FROM read_fasta('test/sql/test.fasta*') ORDER BY file_name;
+----
+test/sql/test.fasta
+test/sql/test.fasta.gz
+
+query IIIII
 SELECT * FROM read_fastq('test/sql/test.fastq');
 ----
 SEQ_ID
 NULL
 GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
 !''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+test/sql/test.fastq
 SEQ_ID2
 NULL
 GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
 !''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+test/sql/test.fastq
 
-query IIII
+query IIIII
 SELECT * FROM read_fastq('test/sql/test.fastq.gz');
 ----
 SEQ_ID
 NULL
 GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
 !''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+test/sql/test.fastq.gz
 SEQ_ID2
 NULL
 GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
 !''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+test/sql/test.fastq.gz
+
+query I
+SELECT DISTINCT file_name FROM read_fastq('test/sql/test.fastq*') ORDER BY file_name;
+----
+test/sql/test.fastq
+test/sql/test.fastq.gz
+
+query I
+SELECT COUNT(*) FROM 'test/sql/*.fastq';
+----
+2
+
+query I
+SELECT COUNT(*) FROM 'test/sql/*.fasta';
+----
+2
