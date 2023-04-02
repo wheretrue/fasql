@@ -40,6 +40,8 @@ The schemas for the FASTA and FASTQ table functions are as follows.
 
 #### FASTA
 
+The `read_fasta` function returns a table with the following schema.
+
 | column_name | column_type | null |
 | ----------- | ----------- | ---- |
 | id          | VARCHAR     | YES  |
@@ -48,6 +50,8 @@ The schemas for the FASTA and FASTQ table functions are as follows.
 | file_name   | VARCHAR     | YES  |
 
 #### FASTQ
+
+The `read_fastq` function returns a table with the following schema.
 
 | column_name    | column_type | null |
 | -------------- | ----------- | ---- |
@@ -77,7 +81,7 @@ And for FASTQ:
 
 ### Globs
 
-Globs are supported both within the table function and the replacement scan (provided the glob matches the replacement scan in the first place.
+Globs are supported both within the table function and the replacement scan provided the glob matches the replacement scan in the first place.
 
 For example, `SELECT * FROM './path/to/*.fasta'` will select all FASTA files in the `./path/to/` directory. This is the same as `SELECT * FROM read_fasta('./path/to/*.fasta')`.
 
