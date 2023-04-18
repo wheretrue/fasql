@@ -44,24 +44,24 @@ The schemas for the FASTA and FASTQ table functions are as follows.
 
 The `read_fasta` function returns a table with the following schema.
 
-| column_name | column_type | null |
-| ----------- | ----------- | ---- |
-| id          | VARCHAR     | YES  |
-| description | VARCHAR     | YES  |
-| sequence    | VARCHAR     | YES  |
-| file_name   | VARCHAR     | YES  |
+| column_name | column_type | nullable |
+| ----------- | ----------- | -------- |
+| id          | VARCHAR     | NO       |
+| description | VARCHAR     | YES      |
+| sequence    | VARCHAR     | NO       |
+| file_name   | VARCHAR     | NO       |
 
 #### FASTQ
 
 The `read_fastq` function returns a table with the following schema.
 
-| column_name    | column_type | null |
-| -------------- | ----------- | ---- |
-| id             | VARCHAR     | YES  |
-| description    | VARCHAR     | YES  |
-| sequence       | VARCHAR     | YES  |
-| quality_scores | VARCHAR     | YES  |
-| file_name      | VARCHAR     | YES  |
+| column_name    | column_type | nullable |
+| -------------- | ----------- | -------- |
+| id             | VARCHAR     | NO       |
+| description    | VARCHAR     | YES      |
+| sequence       | VARCHAR     | NO       |
+| quality_scores | VARCHAR     | NO       |
+| file_name      | VARCHAR     | NO       |
 
 ### Replacement Scans
 
