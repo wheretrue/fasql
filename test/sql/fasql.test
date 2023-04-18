@@ -88,13 +88,13 @@ SELECT COUNT(*) FROM 'test/sql/*.fasta';
 2
 
 query I
-COPY (SELECT id, description, sequence FROM read_fasta('test/sql/test.fasta')) TO 'all.fasta' WITH (FORMAT 'fasta');
+COPY (SELECT id, description, sequence FROM read_fasta('test/sql/test.fasta')) TO 'tmp/all.fasta' WITH (FORMAT 'fasta');
 ----
 2
 
 # Read back from the output to see it was correctly formatted
 query I
-SELECT COUNT(*) FROM read_fasta('all.fasta');
+SELECT COUNT(*) FROM read_fasta('tmp/all.fasta');
 ----
 2
 

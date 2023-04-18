@@ -235,7 +235,7 @@ namespace fasql
 
         auto compression = duckdb::StringUtil::EndsWith(file_name, ".gz");
 
-        auto file_pointer = open(file_name.c_str(), O_WRONLY | O_CREAT);
+        auto file_pointer = open(file_name.c_str(), O_WRONLY | O_CREAT, 0644);
 
         auto global_state = duckdb::make_unique<FastaWriteGlobalState>(file_pointer);
 
@@ -317,7 +317,6 @@ namespace fasql
         auto &global_state = (FastaWriteGlobalState &)gstate;
 
         global_state.stream << klibpp::kend;
-
         close(global_state.file_descriptor);
     };
 

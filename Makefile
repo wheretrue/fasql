@@ -68,8 +68,7 @@ release_python: release
 test: test_release
 
 test_release: release
-	mkdir tmp && ./build/release/test/unittest --test-dir . "[sql]"
-	rm -rf tmp
+	mkdir -p tmp && ./build/release/test/unittest --test-dir . "[sql]" || rm -rf tmp
 
 test_debug: debug
 	./build/debug/test/unittest --test-dir . "[sql]"
