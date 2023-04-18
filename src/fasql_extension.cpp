@@ -36,8 +36,10 @@ namespace duckdb
         auto fastq_replacement_scan = fasql::FastqIO::GetFastqReplacementScanFunction;
         config.replacement_scans.emplace_back(fastq_replacement_scan);
 
+#if defined(__APPLE__) || defined(__linux__)
         auto fasta_copy = fasql::FastaIO::GetFastaCopyFunction();
         catalog.CreateCopyFunction(context, fasta_copy.get());
+#endif
 
         con.Commit();
     }

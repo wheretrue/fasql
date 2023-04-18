@@ -20,10 +20,10 @@ list(APPEND available_contents kseqpp)
 FetchContent_MakeAvailable(${available_contents})
 
 include_directories(${kseqpp_SOURCE_DIR}/include)
-
 find_package(ZLIB REQUIRED)
 
 set(EXTENSION_SOURCES src/fasql_extension.cpp src/fasta_io.cpp src/fastq_io.cpp)
+
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
 target_link_libraries(${EXTENSION_NAME}

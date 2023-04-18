@@ -1,18 +1,20 @@
 # fasql (v0.2.0)
 
-> Read FASTX Files w/ DuckDB
+> Read and Write FASTX Files w/ DuckDB
 
-- [Overview](#overview)
+- [Reading Overview](#reading-overview)
   - [Schemas](#schemas)
     - [FASTA](#fasta)
     - [FASTQ](#fastq)
   - [Replacement Scans](#replacement-scans)
   - [Globs](#globs)
+- [Writing Overview](#writing-overview)
+  - [FASTA](#fasta-1)
 - [Installation and Usage](#installation-and-usage)
   - [DuckDB Console](#duckdb-console)
   - [Python](#python)
 
-## Overview
+## Reading Overview
 
 `fasql` is an open source DuckDB Extension from [WHERE TRUE Technologies](https://www.wheretrue.com) that adds FASTA and FASTQ file parsing as table functions.
 
@@ -84,6 +86,20 @@ And for FASTQ:
 Globs are supported both within the table function and the replacement scan provided the glob matches the replacement scan in the first place.
 
 For example, `SELECT * FROM './path/to/*.fasta'` will select all FASTA files in the `./path/to/` directory. This is the same as `SELECT * FROM read_fasta('./path/to/*.fasta')`.
+
+## Writing Overview
+
+On MacOS and Linux, you can write FASTA and FASTQ files using `COPY TO`.
+
+### FASTA
+
+For example, given a table called `my_fasta` with the schema `id VARCHAR, description VARCHAR, sequence VARCHAR`, you can write it to a file called `my_fasta.fasta` like so.
+
+```sql
+COPY my_fasta TO 'my_fasta.fasta' (FORMAT 'fasta');
+```
+
+A `description` column is optional, and if not present will be ignored.
 
 ## Installation and Usage
 

@@ -15,7 +15,9 @@ namespace fasql
         static duckdb::unique_ptr<duckdb::CreateTableFunctionInfo> GetFastaTableFunction();
         static duckdb::unique_ptr<duckdb::TableRef> GetFastaReplacementScanFunction(duckdb::ClientContext &context, const std::string &table_name, duckdb::ReplacementScanData *data);
 
+#if defined(__APPLE__) || defined(__linux__)
         static duckdb::unique_ptr<duckdb::CreateCopyFunctionInfo> GetFastaCopyFunction();
+#endif
     };
 
 }

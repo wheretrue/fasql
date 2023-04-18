@@ -5,7 +5,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
+#if defined(__APPLE__) || defined(__linux__)
 #include <fcntl.h>
+#endif
 
 #include "fasta_io.hpp"
 
@@ -170,6 +173,7 @@ namespace fasql
         return table_function;
     }
 
+#if defined(__APPLE__) || defined(__linux__)
     struct FastaCopyScanOptions
     {
     };
@@ -400,4 +404,5 @@ namespace fasql
 
         return duckdb::make_unique<duckdb::CreateCopyFunctionInfo>(info);
     };
+#endif
 }
