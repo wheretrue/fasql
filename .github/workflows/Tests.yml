@@ -1,0 +1,94 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  linux-test:
+    name: Linux Test
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    strategy:
+      matrix:
+        # Add commits/tags to build against other DuckDB versions
+        duckdb_version: [ 'v0.7.1' ]
+        arch: ['linux_amd64', 'linux_amd64_gcc4']
+        include:
+          - arch: 'linux_amd64'
+            container: 'ubuntu:16.04'
+          - arch: 'linux_amd64_gcc4'
+            container: 'quay.io/pypa/manylinux2014_x86_64'
+    env:
+      GEN: ninja
+
+    steps:
+
+    - name: Install required ubuntu packages
+      if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
+      run: |
+        apt-get update -y -qq
+        apt-get install -y -qq software-properties-common
+        add-apt-repository ppa:git-core/ppa
+        apt-get update -y -qq
+        apt-get install -y -qq ninja-build make gcc-multilib g++-multilib libssl-dev wget openjdk-8-jdk zip maven unixodbc-dev libc6-dev-i386 lib32readline6-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext unzip build-essential checkinstall libffi-dev curl libz-dev openssh-client libbz2-dev bzip2
+
+    - name: Install Git 2.18.5
+      if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
+      run: |
+        wget https://github.com/git/git/archive/refs/tags/v2.18.5.tar.gz
+        tar xvf v2.18.5.tar.gz
+        cd git-2.18.5
+        make
+        make prefix=/usr install
+        git --version
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: 'true'
+
+    - name: Checkout DuckDB to version
+      run: |
+        cd duckdb
+        git checkout ${{ matrix.duckdb_version }}
+
+    - name: Install Conda environment from environment.yml
+      uses: mamba-org/provision-with-micromamba@main
+
+    - if: ${{ matrix.arch == 'linux_amd64_gcc4' }}
+      uses: ./duckdb/.github/actions/centos_7_setup
+      with:
+        openssl: 0
+
+    - if: ${{ matrix.arch == 'linux_amd64_gcc4' }}
+      run: |
+        yum -y install bzip2-devel
+
+    - if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
+      uses: ./duckdb/.github/actions/ubuntu_16_setup
+      with:
+        aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 }}
+
+      # Build extension
+    - name: Build extension
+      env:
+        GEN: ninja
+        STATIC_LIBCPP: 1
+        CC: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-gcc' || '' }}
+        CXX: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-g++' || '' }}
+      run: |
+        make release
+
+    - name: Build extension
+      if: ${{ matrix.arch != 'linux_arm64'}}
+      run: |
+        make test
