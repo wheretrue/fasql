@@ -95,8 +95,20 @@ On MacOS and Linux, you can write FASTA and FASTQ files using `COPY TO`.
 
 For example, given a table called `my_fasta` with the schema `id VARCHAR, description VARCHAR, sequence VARCHAR`, you can write it to a file called `my_fasta.fasta` like so.
 
+For example, combining this with the DuckDB postgres scanner to export a query to a file:
+
 ```sql
-COPY my_fasta TO 'my_fasta.fasta' (FORMAT 'fasta');
+LOAD 'postgres_scanner';
+LOAD 'fasql';
+
+-- Your connection string here, can use PGPASSWORD for the password
+CALL POSTGRES_ATTACH('postgres://localhost:5432/my_db');
+
+COPY (
+  SELECT id_col AS id, desc_col AS description, seq_col AS sequence
+  FROM my_table
+  WHERE length(seq_col) < 50
+) TO 'long_sequences.fasta' (FORMAT 'fasta');
 ```
 
 A `description` column is optional, and if not present will be ignored.
