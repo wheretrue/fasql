@@ -20,6 +20,16 @@ SELECT COUNT(*) FROM 'test/sql/test.fastq.gz'
 ----
 2
 
+query I
+COPY (SELECT id, description, sequence, quality_scores FROM read_fastq('test/sql/test.fastq')) TO 'tmp/all.fastq' WITH (FORMAT 'fastq');
+----
+2
+
+query I
+COPY (SELECT id, sequence, quality_scores FROM read_fastq('test/sql/test.fastq')) TO 'tmp/all2.fastq' WITH (FORMAT 'fastq');
+----
+2
+
 query IIII
 SELECT * FROM read_fasta('test/sql/test.fasta');
 ----
