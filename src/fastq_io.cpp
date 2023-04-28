@@ -5,9 +5,14 @@
 #include <string>
 #include <vector>
 
+#if defined(__APPLE__) || defined(__linux__)
+#include <fcntl.h>
+#endif
+
 #include "fastq_io.hpp"
 
 #include <kseq++/seqio.hpp>
+#include <kseq++/kseq++.hpp>
 
 namespace fasql
 {
@@ -175,5 +180,238 @@ namespace fasql
 
         return table_function;
     }
+#if defined(__APPLE__) || defined(__linux__)
+    struct FastqCopyScanOptions
+    {
+    };
 
+    struct FastqWriteBindData : public duckdb::TableFunctionData
+    {
+        std::string file_name;
+    };
+
+    struct FastqWriteGlobalState : public duckdb::GlobalFunctionData
+    {
+        int file_descriptor;
+        klibpp::KStream<int, ssize_t (*)(int __fd, const void *__buf, size_t __nbyte), klibpp::mode::Out_> stream;
+
+        // an example of an alternative constructor
+        FastqWriteGlobalState(int fd)
+            : file_descriptor(fd), stream(klibpp::make_kstream(fd, write, klibpp::mode::out))
+        {
+        }
+    };
+
+    struct FastqCopyBindData : public duckdb::TableFunctionData
+    {
+        std::string file_name;
+        klibpp::SeqStreamIn *in_stream;
+    };
+
+    duckdb::unique_ptr<duckdb::FunctionData>
+    FastqCopyToBind(duckdb::ClientContext &context, duckdb::CopyInfo &info, std::vector<std::string> &names, std::vector<duckdb::LogicalType> &sql_types)
+    {
+        auto result = duckdb::make_unique<FastqWriteBindData>();
+        result->file_name = info.file_path;
+
+        auto &fs = duckdb::FileSystem::GetFileSystem(context);
+        auto copy_to_file_exists = fs.FileExists(result->file_name);
+
+        if (copy_to_file_exists)
+        {
+            throw std::runtime_error("File already exists, please remove.");
+        }
+
+        if (!(names == std::vector<std::string>{"id", "description", "sequence", "quality_scores"} || names == std::vector<std::string>{"id", "sequence", "quality_scores"}))
+        {
+            throw std::runtime_error("Invalid column names for FASTQ file, expected id, description, sequence, quality_scores or id, sequence, quality_scores.");
+        }
+
+        for (auto &type : sql_types)
+        {
+            if (type.id() != duckdb::LogicalTypeId::VARCHAR)
+            {
+                throw std::runtime_error("Invalid column type for FASTA file, expected VARCHAR.");
+            }
+        }
+
+        return std::move(result);
+    };
+
+    static duckdb::unique_ptr<duckdb::GlobalFunctionData> FastqWriteInitializeGlobal(duckdb::ClientContext &context, duckdb::FunctionData &bind_data, const std::string &file_path)
+    {
+        auto &fasta_write_bind = (FastqWriteBindData &)bind_data;
+        auto file_name = fasta_write_bind.file_name;
+
+        auto compression = duckdb::StringUtil::EndsWith(file_name, ".gz");
+
+        auto file_pointer = open(file_name.c_str(), O_WRONLY | O_CREAT, 0644);
+
+        auto global_state = duckdb::make_unique<FastqWriteGlobalState>(file_pointer);
+
+        return std::move(global_state);
+    }
+
+    static duckdb::unique_ptr<duckdb::LocalFunctionData> FastqWriteInitializeLocal(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data)
+    {
+        auto local_data = duckdb::make_unique<duckdb::LocalFunctionData>();
+        return std::move(local_data);
+    }
+
+    static void FastqWriteSink(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data_p, duckdb::GlobalFunctionData &gstate,
+                               duckdb::LocalFunctionData &lstate, duckdb::DataChunk &input)
+    {
+        auto &bind_data = (FastqWriteBindData &)bind_data_p;
+        auto &global_state = (FastqWriteGlobalState &)gstate;
+
+        // First throw an error if the input size isn't two or three, then get a boolean for which is the case.
+        if (input.size() != 2 && input.size() != 3)
+        {
+            throw std::runtime_error("FastqWriteSink: input.size() != 3 && input.size() != 4");
+        }
+
+        auto three_columns = input.data.size() == 3;
+
+        if (three_columns)
+        {
+            auto &id = input.data[0];
+            auto &sequence = input.data[1];
+            auto &quality_scores = input.data[2];
+
+            for (size_t i = 0; i < input.size(); i++)
+            {
+                auto id_str = id.GetValue(i).ToString();
+                auto sequence_str = sequence.GetValue(i).ToString();
+                auto quality_scores_str = quality_scores.GetValue(i).ToString();
+
+                // Create the kseq record
+                auto record = klibpp::KSeq{
+                    id_str,
+                    "",
+                    sequence_str,
+                    quality_scores_str,
+                };
+
+                global_state.stream << record;
+            }
+        }
+        else
+        {
+            auto &id = input.data[0];
+            auto &description = input.data[1];
+            auto &sequence = input.data[2];
+            auto &quality_scores = input.data[3];
+
+            for (size_t i = 0; i < input.size(); i++)
+            {
+                auto id_str = id.GetValue(i).ToString();
+                auto description_str = description.GetValue(i).ToString();
+                auto sequence_str = sequence.GetValue(i).ToString();
+                auto quality_scores_str = quality_scores.GetValue(i).ToString();
+
+                auto record = klibpp::KSeq{
+                    id_str,
+                    description_str,
+                    sequence_str,
+                    quality_scores_str,
+                };
+
+                global_state.stream << record;
+            }
+        }
+    };
+
+    static void FastqWriteCombine(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data, duckdb::GlobalFunctionData &gstate, duckdb::LocalFunctionData &lstate)
+    {
+    }
+
+    void FastqWriteFinalize(duckdb::ClientContext &context, duckdb::FunctionData &bind_data, duckdb::GlobalFunctionData &gstate)
+    {
+        auto &global_state = (FastqWriteGlobalState &)gstate;
+
+        global_state.stream << klibpp::kend;
+        close(global_state.file_descriptor);
+    };
+
+    static duckdb::unique_ptr<duckdb::FunctionData> FastqCopyBind(duckdb::ClientContext &context, duckdb::CopyInfo &info, std::vector<std::string> &names, std::vector<duckdb::LogicalType> &sql_types)
+    {
+        auto result = duckdb::make_unique<FastqCopyBindData>();
+
+        // Check that the input names are correct
+        if (names.size() == 4)
+        {
+            if (names[0] != "id" || names[1] != "description" || names[2] != "sequence" || names[3] != "quality_scores")
+            {
+                throw std::runtime_error("Invalid column names for FASTA COPY. Expected (id, description, sequence)");
+            }
+        }
+        else if (names.size() == 3)
+        {
+            if (names[0] != "id" || names[1] != "sequence" || names[2] != "quality_scores")
+            {
+                throw std::runtime_error("Invalid column names for FASTA COPY. Expected (id, sequence)");
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Invalid column names for FASTQ COPY. Expected (id, description, sequence, quality_scores) or (id, sequence, quality_scores)");
+        }
+
+        // Check the input types are correct, if 2 or 3 length is allowed and all must be varchars
+        if (sql_types.size() == 3)
+        {
+            if (sql_types[0] != duckdb::LogicalType::VARCHAR || sql_types[1] != duckdb::LogicalType::VARCHAR || sql_types[2] != duckdb::LogicalType::VARCHAR || sql_types[3] != duckdb::LogicalType::VARCHAR)
+            {
+                throw std::runtime_error("Invalid column types for FASTA COPY. Expected (VARCHAR, VARCHAR, VARCHAR, VARCHAR)");
+            }
+        }
+        else if (sql_types.size() == 3)
+        {
+            if (sql_types[0] != duckdb::LogicalType::VARCHAR || sql_types[1] != duckdb::LogicalType::VARCHAR || sql_types[2] != duckdb::LogicalType::VARCHAR)
+            {
+                throw std::runtime_error("Invalid column types for FASTA COPY. Expected (VARCHAR, VARCHAR, VARCHAR)");
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Invalid column types for FASTQ COPY. Expected (VARCHAR, VARCHAR, VARCHAR, VARCHAR) or (VARCHAR, VARCHAR, VARCHAR)");
+        }
+
+        result->file_name = info.file_path;
+        result->in_stream = new klibpp::SeqStreamIn(result->file_name.c_str());
+
+        return std::move(result);
+    }
+
+    duckdb::CopyFunction CreateFastqCopyFunction()
+    {
+
+        duckdb::CopyFunction function("fastq");
+
+        function.copy_to_bind = FastqCopyToBind;
+        function.copy_to_initialize_global = FastqWriteInitializeGlobal;
+        function.copy_to_initialize_local = FastqWriteInitializeLocal;
+
+        function.copy_to_sink = FastqWriteSink;
+        function.copy_to_combine = FastqWriteCombine;
+        function.copy_to_finalize = FastqWriteFinalize;
+
+        function.copy_from_bind = FastqCopyBind;
+
+        auto fasta_scan_function = duckdb::TableFunction("read_fastq", {duckdb::LogicalType::VARCHAR}, FastqScan, FastqBind, FastqInitGlobalState, FastqInitLocalState);
+
+        function.copy_from_function = fasta_scan_function;
+
+        function.extension = "fastq";
+        return function;
+    }
+
+    duckdb::unique_ptr<duckdb::CreateCopyFunctionInfo> FastqIO::GetFastqCopyFunction()
+    {
+        auto function = CreateFastqCopyFunction();
+        duckdb::CreateCopyFunctionInfo info(function);
+
+        return duckdb::make_unique<duckdb::CreateCopyFunctionInfo>(info);
+    };
+#endif
 }
