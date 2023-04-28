@@ -1,4 +1,4 @@
-# fasql (v0.3.0)
+# fasql (v0.4.0)
 
 > Read and Write FASTX Files w/ DuckDB
 
@@ -10,6 +10,7 @@
   - [Globs](#globs)
 - [Writing Overview](#writing-overview)
   - [FASTA](#fasta-1)
+  - [FASTQ](#fastq-1)
 - [Installation and Usage](#installation-and-usage)
   - [DuckDB Console](#duckdb-console)
   - [Python](#python)
@@ -112,6 +113,10 @@ COPY (
 ```
 
 A `description` column is optional, and if not present will be ignored.
+
+### FASTQ
+
+Similar to above, the `COPY TO` syntax is the same, but the format is `fastq` and schema is `id VARCHAR, description VARCHAR, sequence VARCHAR, quality_scores VARCHAR`.
 
 ## Installation and Usage
 
