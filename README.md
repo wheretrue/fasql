@@ -127,14 +127,14 @@ You can use this extension as you would other DuckDB extensions. Here's one exam
 To install and use `fasql`, start a `duckdb` session:
 
 ```
-# unsigned required for non duckdb distributed extensions
+# unsigned required for non DuckDB Labs distributed extensions (or a large monthly payment)
 $ duckdb -unsigned
 ```
 
 Now from the session:
 
 ```SQL
-D SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';
+D SET custom_extension_repository='ddb.wheretrue.com/fasql/latest';
 D INSTALL fasql;
 D LOAD fasql;
 ```
