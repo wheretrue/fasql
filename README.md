@@ -168,7 +168,7 @@ import pathlib
 import duckdb
 
 con = duckdb.connect(config={'allow_unsigned_extensions': True})
-con.execute("SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';")
+con.execute("SET custom_extension_repository='dbe.wheretrue.com/fasql/latest';")
 con.execute("INSTALL fasql;")
 con.execute("LOAD fasql;")
 
