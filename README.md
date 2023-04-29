@@ -134,7 +134,7 @@ $ duckdb -unsigned
 Now from the session:
 
 ```SQL
-D SET custom_extension_repository='ddb.wheretrue.com/fasql/latest';
+D SET custom_extension_repository='dbe.wheretrue.com/fasql/latest';
 D INSTALL fasql;
 D LOAD fasql;
 ```

@@ -1,4 +1,4 @@
-SET custom_extension_repository='fasql.wheretrue.com/fasql/latest';
+SET custom_extension_repository='dbe.wheretrue.com/fasql/latest';
 INSTALL fasql;
 LOAD fasql;
 
