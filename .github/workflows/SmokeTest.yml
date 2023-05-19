@@ -38,7 +38,7 @@ jobs:
               if: matrix.os == 'ubuntu-latest'
               run: |
                   sudo apt-get install wget unzip
-                  wget -O duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.7.1/duckdb_cli-linux-amd64.zip
+                  wget -O duckdb.zip https://github.com/duckdb/duckdb/releases/download/v0.8.0/duckdb_cli-linux-amd64.zip
                   unzip duckdb.zip -d duckdb
                   sudo mv duckdb/duckdb /usr/local/bin
             - name: Run Test Mac

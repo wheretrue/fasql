@@ -38,10 +38,10 @@ namespace duckdb
 
 #if defined(__APPLE__) || defined(__linux__)
         auto fasta_copy = fasql::FastaIO::GetFastaCopyFunction();
-        catalog.CreateCopyFunction(context, fasta_copy.get());
+        catalog.CreateCopyFunction(context, fasta_copy);
 
         auto fastq_copy = fasql::FastqIO::GetFastqCopyFunction();
-        catalog.CreateCopyFunction(context, fastq_copy.get());
+        catalog.CreateCopyFunction(context, fastq_copy);
 #endif
 
         con.Commit();
