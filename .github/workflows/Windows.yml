@@ -32,7 +32,7 @@ jobs:
           submodules: 'true'
 
       - name: Install Conda environment from environment.yml
-        uses: mamba-org/provision-with-micromamba@main
+        uses: mamba-org/provision-with-micromamba@v15
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
