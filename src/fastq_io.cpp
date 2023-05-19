@@ -144,10 +144,9 @@ namespace fasql
 
     unique_ptr<CreateTableFunctionInfo> FastqIO::GetFastqTableFunction()
     {
-        auto fastq_table_function = TableFunctionSet("read_fastq");
-        auto scan = TableFunction({LogicalType::VARCHAR}, FastqScan, FastqBind, FastqInitGlobalState, FastqInitLocalState);
+        auto scan = TableFunction("read_fastq", {LogicalType::VARCHAR}, FastqScan, FastqBind, FastqInitGlobalState, FastqInitLocalState);
 
-        CreateTableFunctionInfo fastq_table_function_info(fastq_table_function);
+        CreateTableFunctionInfo fastq_table_function_info(scan);
         return make_uniq<CreateTableFunctionInfo>(fastq_table_function_info);
     }
 
