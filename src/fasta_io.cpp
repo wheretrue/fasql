@@ -16,11 +16,12 @@
 #include <kseq++/kseq++.hpp>
 
 using namespace klibpp;
+using namespace duckdb;
 
 namespace fasql
 {
 
-    struct FastaScanBindData : public duckdb::TableFunctionData
+    struct FastaScanBindData : public TableFunctionData
     {
         std::vector<std::string> file_paths;
         int nth_file = 0;
@@ -28,53 +29,53 @@ namespace fasql
         klibpp::SeqStreamIn *stream;
     };
 
-    struct FastaScanLocalState : public duckdb::LocalTableFunctionState
+    struct FastaScanLocalState : public LocalTableFunctionState
     {
         bool done = false;
     };
 
-    struct FastaScanGlobalState : public duckdb::GlobalTableFunctionState
+    struct FastaScanGlobalState : public GlobalTableFunctionState
     {
-        FastaScanGlobalState() : duckdb::GlobalTableFunctionState() {}
+        FastaScanGlobalState() : GlobalTableFunctionState() {}
     };
 
-    duckdb::unique_ptr<duckdb::GlobalTableFunctionState> FastaInitGlobalState(duckdb::ClientContext &context,
-                                                                              duckdb::TableFunctionInitInput &input)
+    unique_ptr<GlobalTableFunctionState> FastaInitGlobalState(ClientContext &context,
+                                                              TableFunctionInitInput &input)
     {
-        auto result = duckdb::make_unique<FastaScanGlobalState>();
+        auto result = make_uniq<FastaScanGlobalState>();
         return std::move(result);
     }
 
-    duckdb::unique_ptr<duckdb::LocalTableFunctionState> FastaInitLocalState(duckdb::ExecutionContext &context, duckdb::TableFunctionInitInput &input,
-                                                                            duckdb::GlobalTableFunctionState *global_state)
+    unique_ptr<LocalTableFunctionState> FastaInitLocalState(ExecutionContext &context, TableFunctionInitInput &input,
+                                                            GlobalTableFunctionState *global_state)
     {
-        auto bind_data = (const FastaScanBindData *)input.bind_data;
-        auto &gstate = (FastaScanGlobalState &)*global_state;
+        // auto bind_data = (const FastaScanBindData *)input.bind_data;
+        // auto &gstate = (FastaScanGlobalState &)*global_state;
 
-        auto local_state = duckdb::make_unique<FastaScanLocalState>();
+        auto local_state = make_uniq<FastaScanLocalState>();
 
         return std::move(local_state);
     }
 
-    duckdb::unique_ptr<duckdb::FunctionData> FastaBind(duckdb::ClientContext &context, duckdb::TableFunctionBindInput &input,
-                                                       std::vector<duckdb::LogicalType> &return_types, std::vector<std::string> &names)
+    unique_ptr<FunctionData> FastaBind(ClientContext &context, TableFunctionBindInput &input,
+                                       vector<LogicalType> &return_types, vector<string> &names)
     {
-        auto result = duckdb::make_unique<FastaScanBindData>();
-        auto &fs = duckdb::FileSystem::GetFileSystem(context);
+        auto result = make_uniq<FastaScanBindData>();
+        auto &fs = FileSystem::GetFileSystem(context);
 
         auto glob = input.inputs[0].GetValue<std::string>();
         std::vector<std::string> glob_result = fs.Glob(glob);
         if (glob_result.size() == 0)
         {
-            throw duckdb::IOException("No files found for glob: " + glob);
+            throw IOException("No files found for glob: " + glob);
         }
         result->file_paths = glob_result;
         result->stream = new klibpp::SeqStreamIn(result->file_paths[0].c_str());
 
-        return_types.push_back(duckdb::LogicalType::VARCHAR);
-        return_types.push_back(duckdb::LogicalType::VARCHAR);
-        return_types.push_back(duckdb::LogicalType::VARCHAR);
-        return_types.push_back(duckdb::LogicalType::VARCHAR);
+        return_types.push_back(LogicalType::VARCHAR);
+        return_types.push_back(LogicalType::VARCHAR);
+        return_types.push_back(LogicalType::VARCHAR);
+        return_types.push_back(LogicalType::VARCHAR);
 
         names.push_back("id");
         names.push_back("description");
@@ -84,38 +85,38 @@ namespace fasql
         return std::move(result);
     }
 
-    void FastaScan(duckdb::ClientContext &context, duckdb::TableFunctionInput &data, duckdb::DataChunk &output)
+    void FastaScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
     {
-        auto bind_data = (FastaScanBindData *)data.bind_data;
-        auto local_state = (FastaScanLocalState *)data.local_state;
+        auto bind_data = data.bind_data->Cast<FastaScanBindData>();
+        auto local_state = data.local_state->Cast<FastaScanLocalState>();
 
-        if (local_state->done)
+        if (local_state.done)
         {
             return;
         }
 
-        auto stream = bind_data->stream;
-        auto nth_file = bind_data->nth_file;
-        auto current_file = bind_data->file_paths[nth_file];
+        auto stream = bind_data.stream;
+        auto nth_file = bind_data.nth_file;
+        auto current_file = bind_data.file_paths[nth_file];
         auto records = stream->read(STANDARD_VECTOR_SIZE);
 
         auto read_records = 0;
 
         for (auto &record : records)
         {
-            output.SetValue(0, output.size(), duckdb::Value(record.name));
+            output.SetValue(0, output.size(), Value(record.name));
 
             if (record.comment.empty())
             {
-                output.SetValue(1, output.size(), duckdb::Value());
+                output.SetValue(1, output.size(), Value());
             }
             else
             {
-                output.SetValue(1, output.size(), duckdb::Value(record.comment));
+                output.SetValue(1, output.size(), Value(record.comment));
             }
 
-            output.SetValue(2, output.size(), duckdb::Value(record.seq));
-            output.SetValue(3, output.size(), duckdb::Value(current_file));
+            output.SetValue(2, output.size(), Value(record.seq));
+            output.SetValue(3, output.size(), Value(current_file));
 
             output.SetCardinality(output.size() + 1);
 
@@ -125,39 +126,39 @@ namespace fasql
         // We have read all records from the current file, check if we have more files or are done.
         if (read_records < STANDARD_VECTOR_SIZE)
         {
-            if (bind_data->nth_file < bind_data->file_paths.size() - 1)
+            if (bind_data.nth_file < bind_data.file_paths.size() - 1)
             {
-                bind_data->nth_file++;
-                bind_data->stream = new klibpp::SeqStreamIn(bind_data->file_paths[bind_data->nth_file].c_str());
+                bind_data.nth_file++;
+                bind_data.stream = new klibpp::SeqStreamIn(bind_data.file_paths[bind_data.nth_file].c_str());
             }
             else
             {
-                local_state->done = true;
+                local_state.done = true;
             }
         }
     };
 
-    duckdb::unique_ptr<duckdb::CreateTableFunctionInfo> FastaIO::GetFastaTableFunction()
+    unique_ptr<CreateTableFunctionInfo> FastaIO::GetFastaTableFunction()
     {
-        auto fasta_table_function = duckdb::TableFunction("read_fasta", {duckdb::LogicalType::VARCHAR}, FastaScan, FastaBind, FastaInitGlobalState, FastaInitLocalState);
+        auto fasta_table_function = TableFunction("read_fasta", {LogicalType::VARCHAR}, FastaScan, FastaBind, FastaInitGlobalState, FastaInitLocalState);
 
-        duckdb::CreateTableFunctionInfo fasta_table_function_info(fasta_table_function);
-        return duckdb::make_unique<duckdb::CreateTableFunctionInfo>(fasta_table_function_info);
+        CreateTableFunctionInfo fasta_table_function_info(fasta_table_function);
+        return make_uniq<CreateTableFunctionInfo>(fasta_table_function_info);
     }
 
-    duckdb::unique_ptr<duckdb::TableRef> FastaIO::GetFastaReplacementScanFunction(duckdb::ClientContext &context, const std::string &table_name, duckdb::ReplacementScanData *data)
+    unique_ptr<TableRef> FastaIO::GetFastaReplacementScanFunction(ClientContext &context, const std::string &table_name, ReplacementScanData *data)
     {
-        auto table_function = duckdb::make_unique<duckdb::TableFunctionRef>();
+        auto table_function = make_uniq<TableFunctionRef>();
 
-        auto valid_fasta_filename = duckdb::StringUtil::EndsWith(table_name, ".fa") || duckdb::StringUtil::EndsWith(table_name, ".fasta");
-        valid_fasta_filename = valid_fasta_filename || duckdb::StringUtil::EndsWith(table_name, ".fa.gz") || duckdb::StringUtil::EndsWith(table_name, ".fasta.gz");
+        auto valid_fasta_filename = StringUtil::EndsWith(table_name, ".fa") || StringUtil::EndsWith(table_name, ".fasta");
+        valid_fasta_filename = valid_fasta_filename || StringUtil::EndsWith(table_name, ".fa.gz") || StringUtil::EndsWith(table_name, ".fasta.gz");
 
         if (!valid_fasta_filename)
         {
             return nullptr;
         };
 
-        auto &fs = duckdb::FileSystem::GetFileSystem(context);
+        auto &fs = FileSystem::GetFileSystem(context);
 
         std::vector<std::string> glob_result = fs.Glob(table_name);
         if (glob_result.size() == 0)
@@ -165,10 +166,10 @@ namespace fasql
             return nullptr;
         }
 
-        std::vector<duckdb::unique_ptr<duckdb::ParsedExpression>> children;
-        children.push_back(duckdb::make_unique<duckdb::ConstantExpression>(duckdb::Value(table_name)));
+        std::vector<unique_ptr<ParsedExpression>> children;
+        children.push_back(make_uniq<ConstantExpression>(Value(table_name)));
 
-        table_function->function = duckdb::make_unique<duckdb::FunctionExpression>("read_fasta", std::move(children));
+        table_function->function = make_uniq<FunctionExpression>("read_fasta", std::move(children));
 
         return table_function;
     }
@@ -178,12 +179,12 @@ namespace fasql
     {
     };
 
-    struct FastaWriteBindData : public duckdb::TableFunctionData
+    struct FastaWriteBindData : public TableFunctionData
     {
         std::string file_name;
     };
 
-    struct FastaWriteGlobalState : public duckdb::GlobalFunctionData
+    struct FastaWriteGlobalState : public GlobalFunctionData
     {
         int file_descriptor;
         klibpp::KStream<int, ssize_t (*)(int __fd, const void *__buf, size_t __nbyte), klibpp::mode::Out_> stream;
@@ -195,19 +196,19 @@ namespace fasql
         }
     };
 
-    struct FastaCopyBindData : public duckdb::TableFunctionData
+    struct FastaCopyBindData : public TableFunctionData
     {
         std::string file_name;
         klibpp::SeqStreamIn *in_stream;
     };
 
-    duckdb::unique_ptr<duckdb::FunctionData>
-    FastaCopyToBind(duckdb::ClientContext &context, duckdb::CopyInfo &info, std::vector<std::string> &names, std::vector<duckdb::LogicalType> &sql_types)
+    unique_ptr<FunctionData>
+    FastaCopyToBind(ClientContext &context, CopyInfo &info, vector<std::string> &names, vector<LogicalType> &sql_types)
     {
-        auto result = duckdb::make_unique<FastaWriteBindData>();
+        auto result = make_uniq<FastaWriteBindData>();
         result->file_name = info.file_path;
 
-        auto &fs = duckdb::FileSystem::GetFileSystem(context);
+        auto &fs = FileSystem::GetFileSystem(context);
         auto copy_to_file_exists = fs.FileExists(result->file_name);
 
         if (copy_to_file_exists)
@@ -223,7 +224,7 @@ namespace fasql
         // check everything is varchars
         for (auto &type : sql_types)
         {
-            if (type.id() != duckdb::LogicalTypeId::VARCHAR)
+            if (type.id() != LogicalTypeId::VARCHAR)
             {
                 throw std::runtime_error("Invalid column type for FASTA file, expected VARCHAR.");
             }
@@ -232,28 +233,28 @@ namespace fasql
         return std::move(result);
     };
 
-    static duckdb::unique_ptr<duckdb::GlobalFunctionData> FastaWriteInitializeGlobal(duckdb::ClientContext &context, duckdb::FunctionData &bind_data, const std::string &file_path)
+    static unique_ptr<GlobalFunctionData> FastaWriteInitializeGlobal(ClientContext &context, FunctionData &bind_data, const std::string &file_path)
     {
         auto &fasta_write_bind = (FastaWriteBindData &)bind_data;
         auto file_name = fasta_write_bind.file_name;
 
-        auto compression = duckdb::StringUtil::EndsWith(file_name, ".gz");
+        auto compression = StringUtil::EndsWith(file_name, ".gz");
 
         auto file_pointer = open(file_name.c_str(), O_WRONLY | O_CREAT, 0644);
 
-        auto global_state = duckdb::make_unique<FastaWriteGlobalState>(file_pointer);
+        auto global_state = make_uniq<FastaWriteGlobalState>(file_pointer);
 
         return std::move(global_state);
     }
 
-    static duckdb::unique_ptr<duckdb::LocalFunctionData> FastaWriteInitializeLocal(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data)
+    static unique_ptr<LocalFunctionData> FastaWriteInitializeLocal(ExecutionContext &context, FunctionData &bind_data)
     {
-        auto local_data = duckdb::make_unique<duckdb::LocalFunctionData>();
+        auto local_data = make_uniq<LocalFunctionData>();
         return std::move(local_data);
     }
 
-    static void FastaWriteSink(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data_p, duckdb::GlobalFunctionData &gstate,
-                               duckdb::LocalFunctionData &lstate, duckdb::DataChunk &input)
+    static void FastaWriteSink(ExecutionContext &context, FunctionData &bind_data_p, GlobalFunctionData &gstate,
+                               LocalFunctionData &lstate, DataChunk &input)
     {
         auto &bind_data = (FastaWriteBindData &)bind_data_p;
         auto &global_state = (FastaWriteGlobalState &)gstate;
@@ -312,11 +313,11 @@ namespace fasql
         }
     };
 
-    static void FastaWriteCombine(duckdb::ExecutionContext &context, duckdb::FunctionData &bind_data, duckdb::GlobalFunctionData &gstate, duckdb::LocalFunctionData &lstate)
+    static void FastaWriteCombine(ExecutionContext &context, FunctionData &bind_data, GlobalFunctionData &gstate, LocalFunctionData &lstate)
     {
     }
 
-    void FastaWriteFinalize(duckdb::ClientContext &context, duckdb::FunctionData &bind_data, duckdb::GlobalFunctionData &gstate)
+    void FastaWriteFinalize(ClientContext &context, FunctionData &bind_data, GlobalFunctionData &gstate)
     {
         auto &global_state = (FastaWriteGlobalState &)gstate;
 
@@ -324,9 +325,9 @@ namespace fasql
         close(global_state.file_descriptor);
     };
 
-    static duckdb::unique_ptr<duckdb::FunctionData> FastaCopyBind(duckdb::ClientContext &context, duckdb::CopyInfo &info, std::vector<std::string> &names, std::vector<duckdb::LogicalType> &sql_types)
+    static unique_ptr<FunctionData> FastaCopyBind(ClientContext &context, CopyInfo &info, vector<std::string> &names, vector<LogicalType> &sql_types)
     {
-        auto result = duckdb::make_unique<FastaCopyBindData>();
+        auto result = make_uniq<FastaCopyBindData>();
 
         // Check that the input names are correct
         if (names.size() == 3)
@@ -351,14 +352,14 @@ namespace fasql
         // Check the input types are correct, if 2 or 3 length is allowed and all must be varchars
         if (sql_types.size() == 3)
         {
-            if (sql_types[0] != duckdb::LogicalType::VARCHAR || sql_types[1] != duckdb::LogicalType::VARCHAR || sql_types[2] != duckdb::LogicalType::VARCHAR)
+            if (sql_types[0] != LogicalType::VARCHAR || sql_types[1] != LogicalType::VARCHAR || sql_types[2] != LogicalType::VARCHAR)
             {
                 throw std::runtime_error("Invalid column types for FASTA COPY. Expected (VARCHAR, VARCHAR, VARCHAR)");
             }
         }
         else if (sql_types.size() == 2)
         {
-            if (sql_types[0] != duckdb::LogicalType::VARCHAR || sql_types[1] != duckdb::LogicalType::VARCHAR)
+            if (sql_types[0] != LogicalType::VARCHAR || sql_types[1] != LogicalType::VARCHAR)
             {
                 throw std::runtime_error("Invalid column types for FASTA COPY. Expected (VARCHAR, VARCHAR)");
             }
@@ -374,10 +375,10 @@ namespace fasql
         return std::move(result);
     }
 
-    duckdb::CopyFunction CreateFastaCopyFunction()
+    CopyFunction CreateFastaCopyFunction()
     {
 
-        duckdb::CopyFunction function("fasta");
+        CopyFunction function("fasta");
 
         function.copy_to_bind = FastaCopyToBind;
         function.copy_to_initialize_global = FastaWriteInitializeGlobal;
@@ -389,7 +390,7 @@ namespace fasql
 
         function.copy_from_bind = FastaCopyBind;
 
-        auto fasta_scan_function = duckdb::TableFunction("read_fasta", {duckdb::LogicalType::VARCHAR}, FastaScan, FastaBind, FastaInitGlobalState, FastaInitLocalState);
+        auto fasta_scan_function = TableFunction({LogicalType::VARCHAR}, FastaScan, FastaBind, FastaInitGlobalState, FastaInitLocalState);
 
         function.copy_from_function = fasta_scan_function;
 
@@ -397,12 +398,12 @@ namespace fasql
         return function;
     }
 
-    duckdb::unique_ptr<duckdb::CreateCopyFunctionInfo> FastaIO::GetFastaCopyFunction()
+    CreateCopyFunctionInfo FastaIO::GetFastaCopyFunction()
     {
         auto function = CreateFastaCopyFunction();
-        duckdb::CreateCopyFunctionInfo info(function);
+        CreateCopyFunctionInfo info(function);
 
-        return duckdb::make_unique<duckdb::CreateCopyFunctionInfo>(info);
+        return CreateCopyFunctionInfo(info);
     };
 #endif
 }

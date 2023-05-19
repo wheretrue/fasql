@@ -7,17 +7,18 @@
 #include <duckdb/parser/parsed_data/create_table_function_info.hpp>
 #include <duckdb/parser/tableref/table_function_ref.hpp>
 
+using namespace duckdb;
 namespace fasql
 {
 
     class FastqIO
     {
     public:
-        static duckdb::unique_ptr<duckdb::CreateTableFunctionInfo> GetFastqTableFunction();
-        static duckdb::unique_ptr<duckdb::TableRef> GetFastqReplacementScanFunction(duckdb::ClientContext &context, const std::string &table_name, duckdb::ReplacementScanData *data);
+        static unique_ptr<CreateTableFunctionInfo> GetFastqTableFunction();
+        static unique_ptr<TableRef> GetFastqReplacementScanFunction(ClientContext &context, const std::string &table_name, ReplacementScanData *data);
 
 #if defined(__APPLE__) || defined(__linux__)
-        static duckdb::unique_ptr<duckdb::CreateCopyFunctionInfo> GetFastqCopyFunction();
+        static CreateCopyFunctionInfo GetFastqCopyFunction();
 #endif
     };
 
