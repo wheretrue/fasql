@@ -69,6 +69,7 @@ namespace fasql
         {
             throw IOException("No files found for glob: " + glob);
         }
+
         result->file_paths = glob_result;
         result->stream = new klibpp::SeqStreamIn(result->file_paths[0].c_str());
 
@@ -87,8 +88,8 @@ namespace fasql
 
     void FastaScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
     {
-        auto bind_data = data.bind_data->Cast<FastaScanBindData>();
-        auto local_state = data.local_state->Cast<FastaScanLocalState>();
+        auto &bind_data = (FastaScanBindData &)*data.bind_data;
+        auto &local_state = (FastaScanLocalState &)*data.local_state;
 
         if (local_state.done)
         {

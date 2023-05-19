@@ -82,8 +82,8 @@ namespace fasql
 
     void FastqScan(ClientContext &context, TableFunctionInput &data, DataChunk &output)
     {
-        auto bind_data = data.bind_data->Cast<FastqScanBindData>();
-        auto local_state = data.local_state->Cast<FastqScanLocalState>();
+        auto &bind_data = (FastqScanBindData &)*data.bind_data;
+        auto &local_state = (FastqScanLocalState &)*data.local_state;
 
         if (local_state.done)
         {
