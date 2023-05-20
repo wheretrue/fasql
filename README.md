@@ -14,6 +14,7 @@
 - [Installation and Usage](#installation-and-usage)
   - [DuckDB Console](#duckdb-console)
   - [Python](#python)
+- [Supported Platforms](#supported-platforms)
 
 ## Reading Overview
 
@@ -189,3 +190,7 @@ df = con.execute(f"SELECT id, description, sequence FROM read_fasta('{path}');")
 # 3   sp|A0A024SH76|GUX2_HYPJR  Exoglucanase 2 OS=Hypocrea jecorina (strain AT...  MIVGILTTLATLATLAASVPLEERQACSSVWGQCGGQNWSGPTCCA...
 # 4   sp|A0A026W182|ORCO_OOCBI  Odorant receptor coreceptor OS=Ooceraea biroi ...  MMKMKQQGLVADLLPNIRVMKTFGHFVFNYYNDNSSKYLHKVYCCV...
 ```
+
+## Supported Platforms
+
+This extension is built for Linux and MacOS.
