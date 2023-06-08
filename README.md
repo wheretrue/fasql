@@ -1,9 +1,9 @@
 # fasql (v0.5.0)
 
-> Read and Write FASTX Files w/ DuckDB
-
-> **Warning**
+**Warning**
 This repo will be archived. Please see [exon-duckdb](https://github.com/wheretrue/exon-duckdb), which has similar but expanded functionality.
+
+> Read and Write FASTX Files w/ DuckDB
 
 - [Reading Overview](#reading-overview)
   - [Schemas](#schemas)
